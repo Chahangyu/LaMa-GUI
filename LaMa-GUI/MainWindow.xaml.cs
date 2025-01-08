@@ -6,21 +6,21 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Effects;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using System.Drawing.Imaging;
+using System.IO;
 using Microsoft.Win32;
 
 namespace LaMa_GUI;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
     private double brushSize = 10;
     private bool isSelecting = false;
     private Image? image;
+    private Polyline? currentPolyline;
     private ScaleTransform scaleTransform = new ScaleTransform();
 
     public MainWindow()
@@ -62,40 +62,40 @@ public partial class MainWindow : Window
     private void BrushSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         brushSize = e.NewValue;
+
+        if (currentPolyline != null)
+        {
+            currentPolyline.StrokeThickness = brushSize;
+        }
     }
 
     private void DrawingCanvas_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (isSelecting)
         {
-            DrawEllipse(e.GetPosition(DrawingCanvas));
+            currentPolyline = new Polyline
+            {
+                Stroke = Brushes.Red,
+                StrokeThickness = brushSize,
+                Opacity = 0.5
+            };
+
+            currentPolyline.Points.Add(e.GetPosition(DrawingCanvas));
+            DrawingCanvas.Children.Add(currentPolyline);
         }
     }
 
     private void DrawingCanvas_MouseMove(object sender, MouseEventArgs e)
     {
-        if (isSelecting && e.LeftButton == MouseButtonState.Pressed)
+        if (isSelecting && e.LeftButton == MouseButtonState.Pressed && currentPolyline != null)
         {
-            DrawEllipse(e.GetPosition(DrawingCanvas));
+            currentPolyline.Points.Add(e.GetPosition(DrawingCanvas));
         }
     }
 
     private void DrawingCanvas_MouseUp(object sender, MouseButtonEventArgs e)
     {
-    }
-
-    private void DrawEllipse(Point position)
-    {
-        Ellipse ellipse = new Ellipse
-        {
-            Fill = Brushes.Red,
-            Width = brushSize,
-            Height = brushSize,
-            Opacity = 0.5
-        };
-        Canvas.SetLeft(ellipse, position.X - brushSize / 2);
-        Canvas.SetTop(ellipse, position.Y - brushSize / 2);
-        DrawingCanvas.Children.Add(ellipse);
+        currentPolyline = null;
     }
 
     private void DrawingCanvas_MouseWheel(object sender, MouseWheelEventArgs e)

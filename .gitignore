@@ -15,3 +15,4 @@ bld/
 
 # IDE-specific folders
 .vscode/
+.vs/
